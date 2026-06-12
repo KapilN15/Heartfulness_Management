@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Session Categories - Heartfulness NGO{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Session Categories</div>
+    <div class="page-subtitle">Manage session types dynamically</div>
+  </div>
+  <button class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+    <i class="bi bi-plus-lg"></i> Add Category
+  </button>
+</div>
+
+<div class="table-container">
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr><th>#</th><th>Category Name</th><th>Description</th><th>Sessions</th><th>Status</th><th>Created</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for cat in categories %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><strong>{{ cat.name }}</strong></td>
+          <td>{{ cat.description or '-' }}</td>
+          <td>{{ cat.sessions.count() }}</td>
+          <td><span class="badge-{{ cat.status }}">{{ cat.status.title() }}</span></td>
+          <td>{{ cat.created_at.strftime('%d %b %Y') }}</td>
+          <td>
+            <button class="btn-sm-action btn-edit" data-bs-toggle="modal"
+                    data-bs-target="#editCatModal{{ cat.id }}">
+              <i class="bi bi-pencil"></i> Edit
+            </button>
+          </td>
+        </tr>
+
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editCatModal{{ cat.id }}" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Edit Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <form method="POST" action="{{ url_for('sessions.edit_category', id=cat.id) }}">
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label">Category Name *</label>
+                    <input type="text" name="name" class="form-control" value="{{ cat.name }}" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" class="form-control" rows="2">{{ cat.description or '' }}</textarea>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                      <option value="active" {% if cat.status=='active' %}selected{% endif %}>Active</option>
+                      <option value="inactive" {% if cat.status=='inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn-primary-custom">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <tr><td colspan="7" class="text-center py-4 text-secondary">No categories yet. Add one above.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-tags-fill me-2 text-primary"></i>Add Category</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('sessions.add_category') }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Category Name *</label>
+            <input type="text" name="name" class="form-control" required placeholder="e.g. Meditation, Youth Program">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" rows="2" placeholder="Optional description"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-primary-custom"><i class="bi bi-plus-lg me-1"></i>Add Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

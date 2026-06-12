@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Session - Heartfulness NGO{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ action }} Session</div>
+    <div class="page-subtitle">{% if action == 'Add' %}Create a new session{% else %}Update session details{% endif %}</div>
+  </div>
+  <a href="{{ url_for('sessions.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<div class="form-card" style="max-width:700px">
+  {% if session %}
+  <div class="mb-3 p-3 rounded" style="background:var(--accent-light)">
+    <strong>Session ID:</strong> <span class="member-id-badge">{{ session.session_id }}</span>
+  </div>
+  {% endif %}
+  <form method="POST">
+    <div class="row g-3">
+      <div class="col-md-8">
+        <label class="form-label">Session Name *</label>
+        <input type="text" name="session_name" class="form-control" required
+               value="{{ session.session_name if session else '' }}" placeholder="Enter session name">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Category</label>
+        <select name="category_id" class="form-select">
+          <option value="">Select category</option>
+          {% for c in categories %}
+          <option value="{{ c.id }}" {% if session and session.category_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Date *</label>
+        <input type="date" name="date" class="form-control" required
+               value="{{ session.date.strftime('%Y-%m-%d') if session and session.date else '' }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Start Time</label>
+        <input type="time" name="start_time" class="form-control"
+               value="{{ session.start_time if session else '09:00' }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">End Time</label>
+        <input type="time" name="end_time" class="form-control"
+               value="{{ session.end_time if session else '11:00' }}">
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">Venue</label>
+        <input type="text" name="venue" class="form-control"
+               value="{{ session.venue if session else '' }}" placeholder="Location or venue name">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select">
+          {% for s in ['draft','scheduled','completed','cancelled'] %}
+          <option value="{{ s }}" {% if session and session.status == s %}selected{% elif not session and s == 'scheduled' %}selected{% endif %}>{{ s.title() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="mt-4 d-flex gap-2">
+      <button type="submit" class="btn-primary-custom">
+        <i class="bi bi-{% if action == 'Add' %}plus{% else %}check{% endif %}-lg me-1"></i>
+        {{ 'Create Session' if action == 'Add' else 'Save Changes' }}
+      </button>
+      <a href="{{ url_for('sessions.index') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

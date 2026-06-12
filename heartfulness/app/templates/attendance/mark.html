@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Mark Attendance - Heartfulness NGO{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Mark Attendance</div>
+    <div class="page-subtitle">
+      <span class="member-id-badge">{{ session.session_id }}</span>
+      <span class="ms-2">{{ session.session_name }}</span>
+    </div>
+  </div>
+  <a href="{{ url_for('attendance.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<!-- Session Info Banner -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-2">
+      <div class="col-auto">
+        <div style="font-size:12px;color:var(--text-muted)">Date</div>
+        <div style="font-weight:600">{{ session.date.strftime('%d %b %Y') }}</div>
+      </div>
+      <div class="col-auto ms-3">
+        <div style="font-size:12px;color:var(--text-muted)">Time</div>
+        <div style="font-weight:600">{{ session.start_time }} - {{ session.end_time }}</div>
+      </div>
+      <div class="col-auto ms-3">
+        <div style="font-size:12px;color:var(--text-muted)">Venue</div>
+        <div style="font-weight:600">{{ session.venue or 'N/A' }}</div>
+      </div>
+      <div class="col-auto ms-3">
+        <div style="font-size:12px;color:var(--text-muted)">Status</div>
+        <span class="badge-{{ session.status }}">{{ session.status.title() }}</span>
+      </div>
+      <div class="col-auto ms-auto">
+        <div style="font-size:14px;font-weight:600;color:var(--accent-primary)" id="presentCount">
+          0 / {{ members|length }} Present
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<form method="POST">
+  <div class="table-container">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border-color);display:flex;gap:8px;align-items:center">
+      <strong style="font-size:14px">{{ members|length }} Active Members</strong>
+      <div class="ms-auto d-flex gap-2">
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="selectAllPresent()">
+          <i class="bi bi-check-all"></i> All Present
+        </button>
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="selectAllAbsent()">
+          <i class="bi bi-x-lg"></i> All Absent
+        </button>
+      </div>
+    </div>
+
+    <!-- Search bar for members -->
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border-color)">
+      <div class="search-wrapper">
+        <i class="bi bi-search"></i>
+        <input type="text" id="memberSearch" class="form-control" placeholder="Search members..."
+               style="padding-left:32px" oninput="filterMembers(this.value)">
+      </div>
+    </div>
+
+    <div id="memberList">
+      {% for member in members %}
+      {% set att = existing.get(member.id) %}
+      <div class="attendance-row member-row" data-name="{{ member.full_name.lower() }}">
+        <input type="checkbox" name="present" value="{{ member.id }}" class="att-checkbox"
+               id="att_{{ member.id }}"
+               {% if att and att.status == 'present' %}checked{% endif %}>
+        <label for="att_{{ member.id }}" style="flex:1;cursor:pointer;margin:0">
+          <div class="att-member">{{ member.full_name }}</div>
+          <div class="att-info">
+            <span class="member-id-badge">{{ member.member_id }}</span>
+            <span class="ms-2">{{ member.area or '' }}</span>
+            <span class="ms-2">{{ member.gender or '' }}</span>
+          </div>
+        </label>
+        <label for="att_{{ member.id }}" class="cursor-pointer">
+          {% if att and att.status == 'present' %}
+            <span class="badge-present">Present</span>
+          {% else %}
+            <span class="badge-absent">Absent</span>
+          {% endif %}
+        </label>
+      </div>
+      {% else %}
+      <div class="text-center py-4 text-secondary">No active members found.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="mt-3 d-flex gap-2">
+    <button type="submit" class="btn-primary-custom" onclick="return confirm('Submit and lock attendance?')">
+      <i class="bi bi-lock-fill me-1"></i> Submit & Lock Attendance
+    </button>
+    <a href="{{ url_for('attendance.index') }}" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Update badge text dynamically when checkbox changes
+document.querySelectorAll('.att-checkbox').forEach(cb => {
+  cb.addEventListener('change', function() {
+    const badge = this.closest('.attendance-row').querySelector('.badge-present, .badge-absent');
+    if (this.checked) {
+      badge.className = 'badge-present';
+      badge.textContent = 'Present';
+    } else {
+      badge.className = 'badge-absent';
+      badge.textContent = 'Absent';
+    }
+    updatePresentCount();
+  });
+});
+
+// Initialise count on load
+updatePresentCount();
+
+function filterMembers(query) {
+  const rows = document.querySelectorAll('.member-row');
+  query = query.toLowerCase();
+  rows.forEach(row => {
+    row.style.display = row.dataset.name.includes(query) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

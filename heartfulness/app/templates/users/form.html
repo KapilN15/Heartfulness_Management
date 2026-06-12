@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} User - Heartfulness NGO{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ action }} User</div>
+    <div class="page-subtitle">{% if action == 'Add' %}Create new staff account{% else %}Update user account{% endif %}</div>
+  </div>
+  <a href="{{ url_for('users.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<div class="form-card" style="max-width:600px">
+  <form method="POST">
+    <div class="mb-3">
+      <label class="form-label">Username {% if not user %}*{% endif %}</label>
+      <input type="text" name="username" class="form-control" {% if not user %}required{% endif %} {% if user %}readonly style="background:var(--bg-primary)"{% endif %}
+             value="{{ user.username if user else '' }}" placeholder="Enter username">
+    </div>
+
+    {% if not user %}
+    <div class="mb-3">
+      <label class="form-label">Password *</label>
+      <input type="password" name="password" class="form-control" required placeholder="Minimum 6 characters">
+    </div>
+    {% endif %}
+
+    <div class="mb-3">
+      <label class="form-label">Full Name</label>
+      <input type="text" name="full_name" class="form-control"
+             value="{{ user.full_name if user else '' }}" placeholder="Full name">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Email</label>
+      <input type="email" name="email" class="form-control"
+             value="{{ user.email if user else '' }}" placeholder="Email address">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Role</label>
+      <select name="role" class="form-select" {% if not user %}required{% endif %}>
+        <option value="">Select role</option>
+        {% for role in allowed_roles %}
+        <option value="{{ role }}" {% if user and user.role == role %}selected{% endif %}>{{ role.replace('_', ' ').title() }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {% if user %}
+    <div class="mb-3">
+      <label class="form-label">Status</label>
+      <select name="status" class="form-select">
+        <option value="active" {% if user.status == 'active' %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if user.status == 'inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+    {% endif %}
+
+    <div class="mt-4 d-flex gap-2">
+      <button type="submit" class="btn-primary-custom">
+        <i class="bi bi-{% if action == 'Add' %}plus{% else %}check{% endif %}-lg me-1"></i>
+        {{ 'Create User' if action == 'Add' else 'Save Changes' }}
+      </button>
+      <a href="{{ url_for('users.index') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

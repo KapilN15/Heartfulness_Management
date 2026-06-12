@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Member Categories - Heartfulness NGO{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Member Categories</div>
+    <div class="page-subtitle">Organize members by categories</div>
+  </div>
+  <a href="{{ url_for('categories.add') }}" class="btn-primary-custom">
+    <i class="bi bi-plus-lg"></i> New Category
+  </a>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="d-flex gap-2 flex-wrap w-100 align-items-end">
+    <div class="filter-group flex-grow-1">
+      <label>Search</label>
+      <div class="search-wrapper">
+        <i class="bi bi-search"></i>
+        <input type="text" name="search" class="form-control" placeholder="Category name..."
+               value="{{ search }}" style="padding-left:32px">
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Status</label>
+      <select name="status" class="form-select">
+        <option value="">All</option>
+        <option value="active" {% if status_f=='active' %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if status_f=='inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <button type="submit" class="btn-primary-custom"><i class="bi bi-search"></i> Filter</button>
+      <a href="{{ url_for('categories.index') }}" class="btn btn-outline-secondary btn-sm" style="height:38px;display:flex;align-items:center"><i class="bi bi-x-lg"></i></a>
+    </div>
+  </form>
+</div>
+
+<div class="table-container">
+  <div style="padding:16px 20px;border-bottom:1px solid var(--border-color)">
+    <span style="font-size:14px;color:var(--text-secondary)">{{ categories.total }} categories</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr><th>#</th><th>Category Name</th><th>Description</th><th>Members</th><th>Status</th><th>Created</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for cat in categories.items %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><strong>{{ cat.name }}</strong></td>
+          <td><span style="font-size:12px;color:var(--text-secondary)">{{ cat.description or '-' }}</span></td>
+          <td>
+            <div style="display:flex;gap:6px;font-size:12px">
+              <span style="background:var(--accent-light);color:var(--accent-primary);padding:2px 10px;border-radius:12px;font-weight:600">{{ cat.total_member_count }}</span>
+              <span style="background:#ECFDF5;color:#059669;padding:2px 10px;border-radius:12px;font-weight:600">{{ cat.active_member_count }}</span>
+              <span style="background:#FEF2F2;color:#DC2626;padding:2px 10px;border-radius:12px;font-weight:600">{{ cat.inactive_member_count }}</span>
+            </div>
+          </td>
+          <td><span class="badge-{{ cat.status }}">{{ cat.status.title() }}</span></td>
+          <td>{{ cat.created_at.strftime('%d %b %Y') }}</td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <a href="{{ url_for('categories.view', id=cat.id) }}" class="btn-sm-action btn-view" title="View Analytics">
+                <i class="bi bi-pie-chart"></i>
+              </a>
+              <a href="{{ url_for('categories.edit', id=cat.id) }}" class="btn-sm-action btn-edit" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% if cat.status == 'active' %}
+              <form method="POST" action="{{ url_for('categories.delete', id=cat.id) }}" style="margin:0">
+                <button type="submit" class="btn-sm-action btn-delete" data-confirm="Disable this category?">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center py-4 text-secondary">No categories found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if categories.pages > 1 %}
+  <div style="padding:16px 20px;border-top:1px solid var(--border-color)">
+    <nav><ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if not categories.has_prev %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('categories.index', page=categories.prev_num, search=search, status=status_f) }}"><i class="bi bi-chevron-left"></i></a>
+      </li>
+      {% for p in categories.iter_pages() %}
+        {% if p %}<li class="page-item {% if p==categories.page %}active{% endif %}"><a class="page-link" href="{{ url_for('categories.index', page=p, search=search, status=status_f) }}">{{ p }}</a></li>
+        {% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+      {% endfor %}
+      <li class="page-item {% if not categories.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('categories.index', page=categories.next_num, search=search, status=status_f) }}"><i class="bi bi-chevron-right"></i></a>
+      </li>
+    </ul></nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

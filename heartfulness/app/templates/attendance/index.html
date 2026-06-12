@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Attendance - Heartfulness NGO{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Attendance Management</div>
+    <div class="page-subtitle">Mark and track session attendance</div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="d-flex gap-2 flex-wrap w-100 align-items-end">
+    <div class="filter-group flex-grow-1">
+      <label>Search Session</label>
+      <div class="search-wrapper">
+        <i class="bi bi-search"></i>
+        <input type="text" name="search" class="form-control" placeholder="Session name..."
+               value="{{ search }}" style="padding-left:32px">
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Status Filter</label>
+      <select name="status" class="form-select">
+        <option value="">All Sessions</option>
+        {% for s in ['scheduled','completed','draft'] %}
+        <option value="{{ s }}" {% if status_f==s %}selected{% endif %}>{{ s.title() }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <button type="submit" class="btn-primary-custom"><i class="bi bi-search"></i> Filter</button>
+      <a href="{{ url_for('attendance.index') }}" class="btn btn-outline-secondary btn-sm" style="height:38px;display:flex;align-items:center"><i class="bi bi-x-lg"></i></a>
+    </div>
+  </form>
+</div>
+
+<div class="table-container">
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr><th>Session ID</th><th>Session Name</th><th>Date</th><th>Venue</th><th>Status</th><th>Attendance</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for s in sessions.items %}
+        {% set att_total = s.attendance_records.count() %}
+        {% set att_present = s.attendance_records.filter_by(status='present').count() %}
+        <tr>
+          <td><span class="member-id-badge">{{ s.session_id }}</span></td>
+          <td><strong>{{ s.session_name }}</strong></td>
+          <td>{{ s.date.strftime('%d %b %Y') }}</td>
+          <td>{{ s.venue or '-' }}</td>
+          <td>
+            <span class="badge-{{ s.status }}">{{ s.status.title() }}</span>
+            {% if s.attendance_locked %}<span class="badge-locked ms-1"><i class="bi bi-lock-fill"></i> Locked</span>{% endif %}
+          </td>
+          <td>
+            {% if att_total > 0 %}
+              <span style="font-size:13px"><strong style="color:#059669">{{ att_present }}</strong> / {{ att_total }}</span>
+              <div class="progress-custom mt-1" style="width:80px">
+                <div class="progress-fill" style="width:{{ (att_present/att_total*100)|round|int }}%"></div>
+              </div>
+            {% else %}
+              <span class="text-muted" style="font-size:13px">Not taken</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <a href="{{ url_for('attendance.view_session', session_id=s.id) }}" class="btn-sm-action btn-view" title="View">
+                <i class="bi bi-eye"></i>
+              </a>
+              {% if current_user.can('mark_attendance') %}
+                {% if not s.attendance_locked or current_user.has_role('admin','super_admin') %}
+                <a href="{{ url_for('attendance.mark', session_id=s.id) }}" class="btn-sm-action btn-success-sm" title="Mark Attendance">
+                  <i class="bi bi-check2-square"></i> Mark
+                </a>
+                {% endif %}
+              {% endif %}
+              {% if s.attendance_locked and current_user.has_role('admin','super_admin') %}
+              <form method="POST" action="{{ url_for('attendance.reopen', session_id=s.id) }}" style="margin:0">
+                <button type="submit" class="btn-sm-action btn-edit" title="Reopen Attendance"
+                        data-confirm="Reopen attendance for editing?">
+                  <i class="bi bi-unlock-fill"></i>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center py-4 text-secondary">No sessions found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if sessions.pages > 1 %}
+  <div style="padding:16px 20px;border-top:1px solid var(--border-color)">
+    <nav><ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if not sessions.has_prev %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('attendance.index', page=sessions.prev_num, search=search, status=status_f) }}"><i class="bi bi-chevron-left"></i></a>
+      </li>
+      {% for p in sessions.iter_pages() %}
+        {% if p %}<li class="page-item {% if p==sessions.page %}active{% endif %}"><a class="page-link" href="{{ url_for('attendance.index', page=p, search=search, status=status_f) }}">{{ p }}</a></li>
+        {% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+      {% endfor %}
+      <li class="page-item {% if not sessions.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('attendance.index', page=sessions.next_num, search=search, status=status_f) }}"><i class="bi bi-chevron-right"></i></a>
+      </li>
+    </ul></nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

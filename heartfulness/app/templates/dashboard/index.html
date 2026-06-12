@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - Heartfulness NGO{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Dashboard</div>
+    <div class="page-subtitle">Welcome back, <strong>{{ current_user.full_name or current_user.username }}</strong></div>
+  </div>
+  <div style="font-size:13px;color:var(--text-2)">
+    <i class="bi bi-calendar3 me-1"></i><span id="currentDate"></span>
+  </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="stat-card si-blue">
+      <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-value">{{ total_members }}</div>
+      <div class="stat-label">Total Members</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card si-green">
+      <div class="stat-icon"><i class="bi bi-person-check-fill"></i></div>
+      <div class="stat-value">{{ active_members }}</div>
+      <div class="stat-label">Active Members</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card si-red">
+      <div class="stat-icon"><i class="bi bi-person-dash-fill"></i></div>
+      <div class="stat-value">{{ inactive_members }}</div>
+      <div class="stat-label">Inactive Members</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card si-purple">
+      <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+      <div class="stat-value">{{ total_sessions }}</div>
+      <div class="stat-label">Total Sessions</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card si-teal">
+      <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="stat-value">{{ completed_sessions }}</div>
+      <div class="stat-label">Completed</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card si-orange">
+      <div class="stat-icon"><i class="bi bi-clock-fill"></i></div>
+      <div class="stat-value">{{ upcoming_sessions }}</div>
+      <div class="stat-label">Upcoming Sessions</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card si-indigo">
+      <div class="stat-icon"><i class="bi bi-clipboard2-check-fill"></i></div>
+      <div class="stat-value">{{ total_attendance }}</div>
+      <div class="stat-label">Attendance Records</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card si-pink">
+      <div class="stat-icon"><i class="bi bi-percent"></i></div>
+      <div class="stat-value">{{ attendance_pct }}%</div>
+      <div class="stat-label">Avg Attendance</div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6 col-xl-4">
+    <div class="chart-card">
+      <div class="chart-title"><i class="bi bi-gender-ambiguous me-2 text-primary"></i>Gender Distribution</div>
+      <div class="chart-container" style="height:200px">
+        <canvas id="genderChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-xl-4">
+    <div class="chart-card">
+      <div class="chart-title"><i class="bi bi-stars me-2 text-warning"></i>Religion Distribution</div>
+      <div class="chart-container" style="height:200px">
+        <canvas id="religionChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-12 col-xl-4">
+    <div class="chart-card">
+      <div class="chart-title"><i class="bi bi-bar-chart-fill me-2 text-success"></i>Age Distribution</div>
+      <div class="chart-container" style="height:200px">
+        <canvas id="ageChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="chart-card">
+      <div class="chart-title"><i class="bi bi-graph-up me-2 text-info"></i>Monthly Member Growth</div>
+      <div class="chart-container" style="height:220px">
+        <canvas id="growthChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="chart-card">
+      <div class="chart-title"><i class="bi bi-activity me-2 text-danger"></i>Attendance Trends (last 5 sessions)</div>
+      <div class="chart-container" style="height:220px">
+        <canvas id="attChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Notifications -->
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-bell-fill text-warning me-2"></i>Notifications</div>
+      <div class="card-body">
+        {% if sessions_today %}
+          {% for s in sessions_today %}
+          <div class="notif-item">
+            <div class="notif-icon" style="background:#EFF6FF;color:#2563EB"><i class="bi bi-calendar-event"></i></div>
+            <div>
+              <div class="notif-text">Session today: <strong>{{ s.session_name }}</strong></div>
+              <div class="notif-time">{{ s.start_time }} – {{ s.end_time }}{% if s.venue %} @ {{ s.venue }}{% endif %}</div>
+            </div>
+          </div>
+          {% endfor %}
+        {% endif %}
+        {% for s in upcoming_list %}
+        <div class="notif-item">
+          <div class="notif-icon" style="background:#FFF7ED;color:#EA580C"><i class="bi bi-clock-history"></i></div>
+          <div>
+            <div class="notif-text">Upcoming: <strong>{{ s.session_name }}</strong></div>
+            <div class="notif-time">{{ s.date.strftime('%d %b %Y') }}</div>
+          </div>
+        </div>
+        {% endfor %}
+        {% if not sessions_today and not upcoming_list %}
+        <p class="text-secondary text-center py-3 mb-0" style="font-size:13px">No upcoming sessions.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-person-plus-fill text-success me-2"></i>Recent Activity</div>
+      <div class="card-body">
+        {% for m in recent_members %}
+        <div class="notif-item">
+          <div class="notif-icon" style="background:#ECFDF5;color:#059669"><i class="bi bi-person-check"></i></div>
+          <div>
+            <div class="notif-text">New member: <strong>{{ m.full_name }}</strong></div>
+            <div class="notif-time">{{ m.member_id }} · {{ m.area or '—' }}</div>
+          </div>
+        </div>
+        {% endfor %}
+        {% for imp in recent_imports %}
+        <div class="notif-item">
+          <div class="notif-icon" style="background:#EFF6FF;color:#2563EB"><i class="bi bi-file-earmark-check"></i></div>
+          <div>
+            <div class="notif-text">CSV Import: <strong>{{ imp.imported_count }} members</strong></div>
+            <div class="notif-time">{{ imp.filename }} · {{ imp.imported_at.strftime('%d %b') }}</div>
+          </div>
+        </div>
+        {% endfor %}
+        {% if not recent_members and not recent_imports %}
+        <p class="text-secondary text-center py-3 mb-0" style="font-size:13px">No recent activity.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('currentDate').textContent =
+  new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+fetch('/dashboard/chart-data')
+  .then(r => r.json())
+  .then(function(data) {
+    const dark      = isDark();
+    const textColor = dark ? '#94A3B8' : '#64748B';
+    const gridColor = dark ? 'rgba(148,163,184,0.10)' : 'rgba(0,0,0,0.05)';
+    const bg        = dark ? '#1E293B' : '#ffffff';
+
+    // ── Gender doughnut ──────────────────────
+    new Chart(document.getElementById('genderChart'), {
+      type: 'doughnut',
+      data: {
+        labels: data.gender.labels,
+        datasets: [{
+          data: data.gender.data,
+          backgroundColor: CHART_COLORS,
+          borderWidth: 2,
+          borderColor: bg
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position:'bottom', labels:{ color:textColor, font:{size:11}, padding:10 } } }
+      }
+    });
+
+    // ── Religion pie ─────────────────────────
+    new Chart(document.getElementById('religionChart'), {
+      type: 'pie',
+      data: {
+        labels: data.religion.labels,
+        datasets: [{
+          data: data.religion.data,
+          backgroundColor: CHART_COLORS,
+          borderWidth: 2,
+          borderColor: bg
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position:'bottom', labels:{ color:textColor, font:{size:11}, padding:10 } } }
+      }
+    });
+
+    // ── Age bar ──────────────────────────────
+    new Chart(document.getElementById('ageChart'), {
+      type: 'bar',
+      data: {
+        labels: data.age.labels,
+        datasets: [{
+          label: 'Members',
+          data: data.age.data,
+          backgroundColor: 'rgba(37,99,235,0.75)',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display:false } },
+        scales: {
+          x: { ticks:{ color:textColor, font:{size:10} }, grid:{ color:gridColor } },
+          y: { ticks:{ color:textColor, font:{size:10} }, grid:{ color:gridColor }, beginAtZero:true }
+        }
+      }
+    });
+
+    // ── Monthly growth line ──────────────────
+    new Chart(document.getElementById('growthChart'), {
+      type: 'line',
+      data: {
+        labels: data.monthly.labels,
+        datasets: [{
+          label: 'New Members',
+          data: data.monthly.data,
+          borderColor: '#10B981',
+          backgroundColor: 'rgba(16,185,129,0.10)',
+          fill: true, tension: 0.4,
+          pointRadius: 4, pointBackgroundColor: '#10B981'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels:{ color:textColor, font:{size:11} } } },
+        scales: {
+          x: { ticks:{ color:textColor, font:{size:10} }, grid:{ color:gridColor } },
+          y: { ticks:{ color:textColor, font:{size:10} }, grid:{ color:gridColor }, beginAtZero:true }
+        }
+      }
+    });
+
+    // ── Attendance trend bar ─────────────────
+    new Chart(document.getElementById('attChart'), {
+      type: 'bar',
+      data: {
+        labels: data.attendance.labels,
+        datasets: [{
+          label: 'Attendance %',
+          data: data.attendance.data,
+          backgroundColor: 'rgba(139,92,246,0.75)',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels:{ color:textColor, font:{size:11} } } },
+        scales: {
+          x: { ticks:{ color:textColor, font:{size:10} }, grid:{ color:gridColor } },
+          y: {
+            max: 100, beginAtZero: true,
+            ticks: { color:textColor, font:{size:10}, callback: v => v + '%' },
+            grid: { color:gridColor }
+          }
+        }
+      }
+    });
+  })
+  .catch(function(err){ console.error('Chart error:', err); });
+</script>
+{% endblock %}

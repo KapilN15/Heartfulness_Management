@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Session Attendance - Heartfulness NGO{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Session Attendance</div>
+    <div class="page-subtitle"><span class="member-id-badge">{{ session.session_id }}</span> {{ session.session_name }}</div>
+  </div>
+  <div class="d-flex gap-2">
+    {% if current_user.can('mark_attendance') and not session.attendance_locked %}
+    <a href="{{ url_for('attendance.mark', session_id=session.id) }}" class="btn-primary-custom">
+      <i class="bi bi-check2-square"></i> Mark Attendance
+    </a>
+    {% endif %}
+    <a href="{{ url_for('attendance.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="stat-card si-blue">
+      <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-value">{{ total }}</div>
+      <div class="stat-label">Total Members</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card si-green">
+      <div class="stat-icon"><i class="bi bi-person-check-fill"></i></div>
+      <div class="stat-value">{{ present }}</div>
+      <div class="stat-label">Present</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card si-pink">
+      <div class="stat-icon"><i class="bi bi-percent"></i></div>
+      <div class="stat-value">{{ pct }}%</div>
+      <div class="stat-label">Attendance Rate</div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3"><strong>Date:</strong> {{ session.date.strftime('%d %b %Y') }}</div>
+      <div class="col-md-3"><strong>Time:</strong> {{ session.start_time }} - {{ session.end_time }}</div>
+      <div class="col-md-3"><strong>Venue:</strong> {{ session.venue or 'N/A' }}</div>
+      <div class="col-md-3">
+        <strong>Lock:</strong>
+        {% if session.attendance_locked %}
+          <span class="badge-locked"><i class="bi bi-lock-fill"></i> Locked</span>
+          {% if current_user.has_role('admin','super_admin') %}
+          <form method="POST" action="{{ url_for('attendance.reopen', session_id=session.id) }}" style="display:inline;margin-left:6px">
+            <button type="submit" class="btn-sm-action btn-edit" data-confirm="Reopen for editing?">
+              <i class="bi bi-unlock"></i> Unlock
+            </button>
+          </form>
+          {% endif %}
+        {% else %}
+          <span class="badge-draft">Unlocked</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="mt-3">
+      <div class="progress-custom" style="height:12px">
+        <div class="progress-fill" style="width:{{ pct }}%"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="table-container">
+  <div style="padding:16px 20px;border-bottom:1px solid var(--border-color)">
+    <strong>{{ total }} Members</strong>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead><tr><th>Member ID</th><th>Name</th><th>Gender</th><th>Area</th><th>Attendance</th></tr></thead>
+      <tbody>
+        {% for att, member in records %}
+        <tr>
+          <td><span class="member-id-badge">{{ member.member_id }}</span></td>
+          <td><a href="{{ url_for('members.view', id=member.id) }}" style="color:var(--accent-primary)">{{ member.full_name }}</a></td>
+          <td>{{ member.gender or '-' }}</td>
+          <td>{{ member.area or '-' }}</td>
+          <td><span class="badge-{{ att.status }}">{{ att.status.title() }}</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center py-4 text-secondary">No attendance records.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

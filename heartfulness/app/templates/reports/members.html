@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}Member Report - Heartfulness NGO{% endblock %}
+{% block page_title %}Member Report{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Member Report</div>
+    <div class="page-subtitle">Demographics and distribution analysis</div>
+  </div>
+  <a href="{{ url_for('reports.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <form method="get" class="d-flex gap-2 flex-wrap w-100 align-items-end">
+    <div class="filter-group">
+      <label>Status</label>
+      <select name="status" class="form-select">
+        <option value="">All</option>
+        <option value="active"   {% if status_f=='active'   %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if status_f=='inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Gender</label>
+      <select name="gender" class="form-select">
+        <option value="">All</option>
+        <option value="Male"   {% if gender_f=='Male'   %}selected{% endif %}>Male</option>
+        <option value="Female" {% if gender_f=='Female' %}selected{% endif %}>Female</option>
+        <option value="Other"  {% if gender_f=='Other'  %}selected{% endif %}>Other</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Religion</label>
+      <select name="religion" class="form-select">
+        <option value="">All</option>
+        {% for r in religions %}
+        <option value="{{ r }}" {% if religion_f==r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Category</label>
+      <select name="category" class="form-select">
+        <option value="">All Categories</option>
+        {% for c in categories %}
+        <option value="{{ c.id }}" {% if category_f==c.id|string %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group flex-grow-1">
+      <label>Area</label>
+      <input type="text" name="area" class="form-control" placeholder="Filter by area..." value="{{ area_f }}">
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <button type="submit" class="btn-primary-custom"><i class="bi bi-search"></i> Filter</button>
+      <a href="{{ url_for('reports.members_report') }}" class="btn btn-outline-secondary btn-sm"
+         style="height:36px;display:flex;align-items:center;padding:0 10px"><i class="bi bi-x-lg"></i></a>
+    </div>
+  </form>
+</div>
+
+<!-- Download bar -->
+<div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+  <a href="{{ url_for('reports.export_members_csv', status=status_f, gender=gender_f, religion=religion_f, area=area_f, category=category_f) }}"
+     class="btn btn-sm btn-outline-success">
+    <i class="bi bi-file-earmark-csv me-1"></i> Download CSV
+  </a>
+  <a href="{{ url_for('reports.export_members_pdf', status=status_f, gender=gender_f) }}"
+     class="btn btn-sm btn-outline-danger">
+    <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+  </a>
+</div>
+
+<!-- Summary cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4">
+    <div class="stat-card si-blue">
+      <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-value">{{ total }}</div>
+      <div class="stat-label">Total Members</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card si-green">
+      <div class="stat-icon"><i class="bi bi-person-check-fill"></i></div>
+      <div class="stat-value">{{ active }}</div>
+      <div class="stat-label">Active</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="stat-card si-red">
+      <div class="stat-icon"><i class="bi bi-person-dash-fill"></i></div>
+      <div class="stat-value">{{ inactive }}</div>
+      <div class="stat-label">Inactive</div>
+    </div>
+  </div>
+</div>
+
+<!-- Distribution tables -->
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="table-container">
+      <div class="card-header"><i class="bi bi-gender-ambiguous text-primary me-2"></i>Gender Distribution</div>
+      <table class="table mb-0">
+        <thead><tr><th>Gender</th><th>Count</th><th>%</th></tr></thead>
+        <tbody>
+          {% for label, count in gender %}
+          <tr>
+            <td>{{ label }}</td>
+            <td><strong>{{ count }}</strong></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="flex:1;height:6px;background:var(--border);border-radius:3px">
+                  <div style="width:{{ (count/total*100)|round|int if total else 0 }}%;height:100%;background:var(--accent);border-radius:3px"></div>
+                </div>
+                <span style="font-size:11px;color:var(--text-2);width:32px">{{ (count/total*100)|round(1) if total else 0 }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="text-center py-3 text-secondary">No data.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="table-container">
+      <div class="card-header"><i class="bi bi-stars text-warning me-2"></i>Religion Distribution</div>
+      <table class="table mb-0">
+        <thead><tr><th>Religion</th><th>Count</th><th>%</th></tr></thead>
+        <tbody>
+          {% for label, count in religion %}
+          <tr>
+            <td>{{ label }}</td>
+            <td><strong>{{ count }}</strong></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="flex:1;height:6px;background:var(--border);border-radius:3px">
+                  <div style="width:{{ (count/total*100)|round|int if total else 0 }}%;height:100%;background:#10B981;border-radius:3px"></div>
+                </div>
+                <span style="font-size:11px;color:var(--text-2);width:32px">{{ (count/total*100)|round(1) if total else 0 }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="text-center py-3 text-secondary">No data.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="table-container">
+      <div class="card-header"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Top Areas</div>
+      <table class="table mb-0">
+        <thead><tr><th>Area</th><th>Count</th><th>%</th></tr></thead>
+        <tbody>
+          {% for label, count in area %}
+          <tr>
+            <td>{{ label }}</td>
+            <td><strong>{{ count }}</strong></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="flex:1;height:6px;background:var(--border);border-radius:3px">
+                  <div style="width:{{ (count/total*100)|round|int if total else 0 }}%;height:100%;background:#F59E0B;border-radius:3px"></div>
+                </div>
+                <span style="font-size:11px;color:var(--text-2);width:32px">{{ (count/total*100)|round(1) if total else 0 }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="text-center py-3 text-secondary">No data.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

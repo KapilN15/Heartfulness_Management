@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}Attendance Report - Heartfulness NGO{% endblock %}
+{% block page_title %}Attendance Report{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Attendance Report</div>
+    <div class="page-subtitle">Session-wise attendance analysis</div>
+  </div>
+  <a href="{{ url_for('reports.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <form method="get" class="d-flex gap-2 flex-wrap w-100 align-items-end">
+    <div class="filter-group">
+      <label>Category</label>
+      <select name="category" class="form-select">
+        <option value="">All Categories</option>
+        {% for c in session_cats %}
+        <option value="{{ c.id }}" {% if cat_f==c.id|string %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>From Date</label>
+      <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+    </div>
+    <div class="filter-group">
+      <label>To Date</label>
+      <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <button type="submit" class="btn-primary-custom"><i class="bi bi-search"></i> Filter</button>
+      <a href="{{ url_for('reports.attendance_report') }}" class="btn btn-outline-secondary btn-sm"
+         style="height:36px;display:flex;align-items:center;padding:0 10px"><i class="bi bi-x-lg"></i></a>
+    </div>
+  </form>
+</div>
+
+<!-- Download -->
+<div style="display:flex;gap:8px;margin-bottom:18px">
+  <a href="{{ url_for('reports.export_attendance_csv', category=cat_f, date_from=date_from, date_to=date_to) }}"
+     class="btn btn-sm btn-outline-success">
+    <i class="bi bi-file-earmark-csv me-1"></i> Download CSV
+  </a>
+</div>
+
+<!-- Summary row -->
+{% set total_sessions = sessions|length %}
+{% set total_present  = sessions|sum(attribute='present') %}
+{% set total_records  = sessions|sum(attribute='total') %}
+{% set avg_pct = (total_present / total_records * 100)|round(1) if total_records else 0 %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card si-blue">
+      <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+      <div class="stat-value">{{ total_sessions }}</div>
+      <div class="stat-label">Sessions</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card si-indigo">
+      <div class="stat-icon"><i class="bi bi-list-check"></i></div>
+      <div class="stat-value">{{ total_records }}</div>
+      <div class="stat-label">Total Records</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card si-green">
+      <div class="stat-icon"><i class="bi bi-person-check-fill"></i></div>
+      <div class="stat-value">{{ total_present }}</div>
+      <div class="stat-label">Total Present</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card si-purple">
+      <div class="stat-icon"><i class="bi bi-percent"></i></div>
+      <div class="stat-value">{{ avg_pct }}%</div>
+      <div class="stat-label">Avg Attendance</div>
+    </div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="table-container">
+  <div style="padding:12px 18px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-2)">
+    {{ sessions|length }} completed session{% if sessions|length != 1 %}s{% endif %}
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Session ID</th><th>Session Name</th><th>Category</th>
+          <th>Date</th><th>Total</th><th>Present</th><th>Absent</th>
+          <th>Attendance %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sessions %}
+        {% set absent = (s.total or 0) - (s.present or 0) %}
+        {% set pct = ((s.present or 0) / s.total * 100)|round(1) if s.total else 0 %}
+        <tr>
+          <td><span class="member-id-badge">{{ s.session_id }}</span></td>
+          <td><strong>{{ s.session_name }}</strong></td>
+          <td>
+            <span style="background:var(--accent-light);color:var(--accent);
+                         padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">
+              {{ s.category_name or '—' }}
+            </span>
+          </td>
+          <td>{{ s.date.strftime('%d %b %Y') }}</td>
+          <td>{{ s.total or 0 }}</td>
+          <td><span class="badge-present">{{ s.present or 0 }}</span></td>
+          <td><span class="badge-absent">{{ absent }}</span></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:80px;height:6px;background:var(--border);border-radius:3px">
+                <div style="width:{{ pct }}%;height:100%;border-radius:3px;
+                            background:{% if pct >= 75 %}#10B981{% elif pct >= 50 %}#F59E0B{% else %}#EF4444{% endif %}"></div>
+              </div>
+              <span style="font-size:12px;font-weight:600">{{ pct }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center py-4 text-secondary">No sessions found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

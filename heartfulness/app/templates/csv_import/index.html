@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}CSV Import - Heartfulness NGO{% endblock %}
+{% block page_title %}CSV Import{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">CSV Import</div>
+    <div class="page-subtitle">Bulk import members from a CSV or TSV file</div>
+  </div>
+  <a href="{{ url_for('csv_import.sample') }}" class="btn-primary-custom">
+    <i class="bi bi-download me-1"></i> Download Sample File
+  </a>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- Upload card -->
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-cloud-upload-fill text-primary me-2"></i>Upload File</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('csv_import.upload') }}" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label class="form-label">Select CSV / TSV file</label>
+            <input type="file" name="file" class="form-control" accept=".csv,.tsv,.txt" required>
+            <div style="font-size:12px;color:var(--text-3);margin-top:6px">
+              Supported: .csv, .tsv — Tab or comma separated
+            </div>
+          </div>
+          <button type="submit" class="btn-primary-custom">
+            <i class="bi bi-upload me-1"></i> Upload & Preview
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Format guide -->
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-info-circle-fill text-info me-2"></i>File Format Guide</div>
+      <div class="card-body" style="font-size:13px">
+        <p style="color:var(--text-2);margin-bottom:10px">Required columns (tab or comma separated):</p>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px">
+          {% for col, note in [
+            ('full_name',     'Required'),
+            ('gender',        'Male / Female / Other'),
+            ('age',           'Number'),
+            ('religion',      'Hindu, Muslim, Christian…'),
+            ('mobile_number', 'Required — used for duplicate detection'),
+            ('area',          'Auto-converted to UPPERCASE'),
+            ('join_date',     '01-01-2024 or 2024-01-01'),
+            ('status',        'Active / Inactive'),
+            ('category',      'Multiple: Meditation, Youth Program'),
+          ] %}
+          <div style="display:flex;gap:8px">
+            <code style="background:var(--accent-light);color:var(--accent);
+                         padding:1px 7px;border-radius:4px;font-size:11px;white-space:nowrap">{{ col }}</code>
+            <span style="color:var(--text-2);font-size:12px">{{ note }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="alert alert-info py-2 px-3 mb-0" style="font-size:12px">
+          <i class="bi bi-lightbulb me-1"></i>
+          <strong>Category tip:</strong> For multiple categories, separate with a comma inside the cell:<br>
+          <code>Community Service, Wellness, Weekly Gathering</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import History -->
+<div class="table-container">
+  <div class="card-header"><i class="bi bi-clock-history me-2"></i>Import History</div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr><th>#</th><th>Filename</th><th>Imported</th><th>Duplicates</th><th>Failed</th><th>By</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        {% for h in history %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><strong>{{ h.filename }}</strong></td>
+          <td><span class="badge-active">{{ h.imported_count }}</span></td>
+          <td><span class="badge-locked">{{ h.duplicate_count }}</span></td>
+          <td>{% if h.failed_count %}<span class="badge-cancelled">{{ h.failed_count }}</span>{% else %}—{% endif %}</td>
+          <td style="font-size:12px">{{ h.importer.username if h.importer else '—' }}</td>
+          <td style="font-size:12px">{{ h.imported_at.strftime('%d %b %Y %H:%M') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center py-4 text-secondary">No imports yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

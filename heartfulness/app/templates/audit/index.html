@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}Audit Logs - Heartfulness NGO{% endblock %}
+{% block page_title %}Audit Logs{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Audit Logs</div>
+    <div class="page-subtitle">Complete system activity trail</div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <form method="get" class="d-flex gap-2 flex-wrap w-100 align-items-end">
+    <div class="filter-group flex-grow-1">
+      <label>Search</label>
+      <div class="filter-search-wrapper">
+        <i class="bi bi-search"></i>
+        <input type="text" name="search" class="form-control"
+               placeholder="Username, action, description..." value="{{ search }}">
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Role</label>
+      <select name="role" class="form-select">
+        <option value="">All Roles</option>
+        <option value="super_admin"  {% if role_f=='super_admin'  %}selected{% endif %}>Super Admin</option>
+        <option value="admin"        {% if role_f=='admin'        %}selected{% endif %}>Admin</option>
+        <option value="coordinator"  {% if role_f=='coordinator'  %}selected{% endif %}>Coordinator</option>
+        <option value="trainer"      {% if role_f=='trainer'      %}selected{% endif %}>Trainer</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Action Type</label>
+      <select name="action" class="form-select">
+        <option value="">All Actions</option>
+        {% for a in actions %}
+        <option value="{{ a }}" {% if action_f==a %}selected{% endif %}>{{ a }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>From Date</label>
+      <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+    </div>
+    <div class="filter-group">
+      <label>To Date</label>
+      <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <button type="submit" class="btn-primary-custom"><i class="bi bi-search"></i> Filter</button>
+      <a href="{{ url_for('audit.index') }}" class="btn btn-outline-secondary btn-sm"
+         style="height:36px;display:flex;align-items:center;padding:0 10px"><i class="bi bi-x-lg"></i></a>
+    </div>
+  </form>
+</div>
+
+<!-- Table -->
+<div class="table-container">
+  <div style="padding:12px 18px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-2)">
+    {{ logs.total }} log entries
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th><th>Timestamp</th><th>User</th><th>Role</th>
+          <th>Action</th><th>Description</th><th>IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs.items %}
+        <tr>
+          <td style="color:var(--text-3);font-size:12px">{{ logs.total - ((logs.page-1)*logs.per_page) - loop.index0 }}</td>
+          <td style="font-size:12px;white-space:nowrap">{{ log.timestamp.strftime('%d %b %Y %H:%M') }}</td>
+          <td><strong>{{ log.username }}</strong></td>
+          <td>
+            <span style="background:var(--accent-light);color:var(--accent);
+                         padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">
+              {{ log.role.replace('_',' ').title() if log.role else '—' }}
+            </span>
+          </td>
+          <td>
+            <span style="font-size:12px;font-weight:600;
+              color:{% if 'Delete' in log.action or 'Disable' in log.action %}#DC2626
+                    {% elif 'Create' in log.action or 'Add' in log.action or 'Import' in log.action %}#059669
+                    {% elif 'Edit' in log.action or 'Change' in log.action %}#D97706
+                    {% else %}var(--accent){% endif %}">
+              {{ log.action }}
+            </span>
+          </td>
+          <td style="font-size:12px;color:var(--text-2);max-width:280px;
+                     overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+              title="{{ log.description }}">
+            {{ log.description }}
+          </td>
+          <td style="font-size:11px;color:var(--text-3)">{{ log.ip_address or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center py-4 text-secondary">No logs found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if logs.pages > 1 %}
+  <div style="padding:12px 18px;border-top:1px solid var(--border)">
+    <nav><ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if not logs.has_prev %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('audit.index', page=logs.prev_num, search=search, role=role_f, action=action_f, date_from=date_from, date_to=date_to) }}">
+          <i class="bi bi-chevron-left"></i>
+        </a>
+      </li>
+      {% for p in logs.iter_pages() %}
+        {% if p %}
+        <li class="page-item {% if p==logs.page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('audit.index', page=p, search=search, role=role_f, action=action_f, date_from=date_from, date_to=date_to) }}">{{ p }}</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+      {% endfor %}
+      <li class="page-item {% if not logs.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('audit.index', page=logs.next_num, search=search, role=role_f, action=action_f, date_from=date_from, date_to=date_to) }}">
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      </li>
+    </ul></nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

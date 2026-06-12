@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ current_user.theme if current_user.is_authenticated else 'light' }}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{% block title %}Heartfulness NGO{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet"/>
+</head>
+<body>
+{% if current_user.is_authenticated %}
+
+<!-- ───────────── SIDEBAR ───────────── -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+    <div class="brand-text">
+      <div class="brand-name">Heartfulness</div>
+      <div class="brand-sub">NGO Management</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="{{ url_for('dashboard.index') }}"
+       class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+    </a>
+    <a href="{{ url_for('members.index') }}"
+       class="nav-item {% if request.endpoint and 'members' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-people-fill"></i><span>Members</span>
+    </a>
+    <a href="{{ url_for('categories.index') }}"
+       class="nav-item {% if request.endpoint and 'categories' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-tags-fill"></i><span>Categories</span>
+    </a>
+    <a href="{{ url_for('csv_import.index') }}"
+       class="nav-item {% if request.endpoint and 'csv_import' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-file-earmark-arrow-up-fill"></i><span>CSV Import</span>
+    </a>
+    <a href="{{ url_for('sessions.index') }}"
+       class="nav-item {% if request.endpoint and 'sessions' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-calendar3"></i><span>Sessions</span>
+    </a>
+    <a href="{{ url_for('attendance.index') }}"
+       class="nav-item {% if request.endpoint and 'attendance' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-check2-square"></i><span>Attendance</span>
+    </a>
+    <a href="{{ url_for('reports.index') }}"
+       class="nav-item {% if request.endpoint and 'reports' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-bar-chart-fill"></i><span>Reports</span>
+    </a>
+    {% if current_user.has_role('admin','super_admin') %}
+    <a href="{{ url_for('users.index') }}"
+       class="nav-item {% if request.endpoint and 'users' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-person-gear"></i><span>Users</span>
+    </a>
+    {% endif %}
+    {% if current_user.has_role('super_admin') %}
+    <a href="{{ url_for('audit.index') }}"
+       class="nav-item {% if request.endpoint and 'audit' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-journal-text"></i><span>Audit Logs</span>
+    </a>
+    <a href="{{ url_for('backup.index') }}"
+       class="nav-item {% if request.endpoint and 'backup' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-database-fill-gear"></i><span>Backup</span>
+    </a>
+    {% endif %}
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">{{ current_user.username[0].upper() }}</div>
+      <div class="sidebar-footer-text">
+        <div class="user-name">{{ current_user.full_name or current_user.username }}</div>
+        <div class="user-role">{{ current_user.role_display }}</div>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Logout">
+        <i class="bi bi-box-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────── MAIN CONTENT ───────────── -->
+<div class="main-content" id="mainContent">
+
+  <!-- Top Nav -->
+  <nav class="top-nav">
+    <!-- Sidebar toggle -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <!-- Page title (dynamic) -->
+    <div class="top-nav-title" id="topNavTitle">{% block page_title %}Heartfulness NGO{% endblock %}</div>
+
+    <!-- Global member search -->
+    <div class="top-nav-search">
+      <form action="{{ url_for('members.index') }}" method="get">
+        <div class="search-wrapper">
+          <i class="bi bi-search"></i>
+          <input type="text" name="search" class="search-input"
+                 placeholder="Search members..."
+                 value="{{ request.args.get('search','') }}"/>
+        </div>
+      </form>
+    </div>
+
+    <div class="top-nav-actions">
+      <!-- Theme toggle -->
+      <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">
+        <i id="themeIcon" class="bi bi-{% if current_user.theme == 'dark' %}sun-fill{% else %}moon-fill{% endif %}"></i>
+      </button>
+
+      <!-- User info -->
+      <div class="nav-user">
+        <div class="user-avatar-sm">{{ current_user.username[0].upper() }}</div>
+        <span class="nav-user-name d-none d-md-block">{{ current_user.username }}</span>
+        <span class="nav-user-role d-none d-lg-block">{{ current_user.role_display }}</span>
+      </div>
+
+      <!-- Logout button -->
+      <a href="{{ url_for('auth.logout') }}" class="nav-logout-btn" title="Logout">
+        <i class="bi bi-box-arrow-right"></i>
+        <span class="d-none d-md-inline">Logout</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Flash messages -->
+  <div class="page-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+            <i class="bi bi-{% if cat=='success' %}check-circle{% elif cat=='danger' %}exclamation-circle{% elif cat=='warning' %}exclamation-triangle{% else %}info-circle{% endif %}-fill me-2"></i>
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+{% else %}
+{% block auth_content %}{% endblock %}
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

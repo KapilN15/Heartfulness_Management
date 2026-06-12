@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Sessions - Heartfulness NGO{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Sessions</div>
+    <div class="page-subtitle">Manage NGO sessions and activities</div>
+  </div>
+  {% if current_user.can('manage_sessions') %}
+  <a href="{{ url_for('sessions.add') }}" class="btn-primary-custom">
+    <i class="bi bi-plus-lg"></i> New Session
+  </a>
+  {% endif %}
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="d-flex gap-2 flex-wrap w-100 align-items-end">
+    <div class="filter-group flex-grow-1">
+      <label>Search</label>
+      <div class="search-wrapper">
+        <i class="bi bi-search"></i>
+        <input type="text" name="search" class="form-control" placeholder="Session name, ID, venue..."
+               value="{{ search }}" style="padding-left:32px">
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Status</label>
+      <select name="status" class="form-select">
+        <option value="">All</option>
+        {% for s in ['draft','scheduled','completed','cancelled'] %}
+        <option value="{{ s }}" {% if status_f==s %}selected{% endif %}>{{ s.title() }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Category</label>
+      <select name="category" class="form-select">
+        <option value="">All</option>
+        {% for c in categories %}
+        <option value="{{ c.id }}" {% if cat_f == c.id|string %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <button type="submit" class="btn-primary-custom"><i class="bi bi-search"></i> Filter</button>
+      <a href="{{ url_for('sessions.index') }}" class="btn btn-outline-secondary btn-sm" style="height:38px;display:flex;align-items:center"><i class="bi bi-x-lg"></i></a>
+    </div>
+  </form>
+</div>
+
+<div class="table-container">
+  <div style="padding:16px 20px;border-bottom:1px solid var(--border-color)">
+    <span style="font-size:14px;color:var(--text-secondary)">{{ sessions.total }} sessions found</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr><th>ID</th><th>Session Name</th><th>Category</th><th>Date</th><th>Time</th><th>Venue</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for s in sessions.items %}
+        <tr>
+          <td><span class="member-id-badge">{{ s.session_id }}</span></td>
+          <td><strong>{{ s.session_name }}</strong></td>
+          <td>{{ s.category.name if s.category else '-' }}</td>
+          <td>{{ s.date.strftime('%d %b %Y') }}</td>
+          <td>{{ s.start_time }} - {{ s.end_time }}</td>
+          <td>{{ s.venue or '-' }}</td>
+          <td><span class="badge-{{ s.status }}">{{ s.status.title() }}</span></td>
+          <td>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              <a href="{{ url_for('attendance.view_session', session_id=s.id) }}" class="btn-sm-action btn-view" title="View Attendance">
+                <i class="bi bi-eye"></i>
+              </a>
+              {% if current_user.can('mark_attendance') and s.status in ('scheduled','completed') %}
+              <a href="{{ url_for('attendance.mark', session_id=s.id) }}" class="btn-sm-action btn-success-sm" title="Mark Attendance">
+                <i class="bi bi-check2-square"></i>
+              </a>
+              {% endif %}
+              {% if current_user.can('manage_sessions') and s.status not in ('completed','cancelled') %}
+              <a href="{{ url_for('sessions.edit', id=s.id) }}" class="btn-sm-action btn-edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% if s.status == 'scheduled' %}
+              <form method="POST" action="{{ url_for('sessions.complete', id=s.id) }}" style="margin:0">
+                <button type="submit" class="btn-sm-action btn-success-sm" data-confirm="Mark as completed?">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+              </form>
+              <form method="POST" action="{{ url_for('sessions.cancel', id=s.id) }}" style="margin:0">
+                <button type="submit" class="btn-sm-action btn-delete" data-confirm="Cancel this session?">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </form>
+              {% endif %}
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center py-4 text-secondary">No sessions found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if sessions.pages > 1 %}
+  <div style="padding:16px 20px;border-top:1px solid var(--border-color)">
+    <nav><ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if not sessions.has_prev %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('sessions.index', page=sessions.prev_num, search=search, status=status_f, category=cat_f) }}"><i class="bi bi-chevron-left"></i></a>
+      </li>
+      {% for p in sessions.iter_pages() %}
+        {% if p %}<li class="page-item {% if p==sessions.page %}active{% endif %}"><a class="page-link" href="{{ url_for('sessions.index', page=p, search=search, status=status_f, category=cat_f) }}">{{ p }}</a></li>
+        {% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+      {% endfor %}
+      <li class="page-item {% if not sessions.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('sessions.index', page=sessions.next_num, search=search, status=status_f, category=cat_f) }}"><i class="bi bi-chevron-right"></i></a>
+      </li>
+    </ul></nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

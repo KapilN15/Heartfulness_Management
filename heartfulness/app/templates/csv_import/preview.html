@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}CSV Import Preview - Heartfulness NGO{% endblock %}
+{% block page_title %}CSV Import Preview{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Preview Import</div>
+    <div class="page-subtitle">File: <strong>{{ filename }}</strong></div>
+  </div>
+  <a href="{{ url_for('csv_import.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<!-- Summary -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card si-blue">
+      <div class="stat-icon"><i class="bi bi-file-earmark-text"></i></div>
+      <div class="stat-value">{{ total }}</div>
+      <div class="stat-label">Total Rows</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card si-green">
+      <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="stat-value">{{ total - duplicates - invalid }}</div>
+      <div class="stat-label">Will Import</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card si-orange">
+      <div class="stat-icon"><i class="bi bi-exclamation-circle-fill"></i></div>
+      <div class="stat-value">{{ duplicates }}</div>
+      <div class="stat-label">Duplicates (skip)</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card si-red">
+      <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+      <div class="stat-value">{{ invalid }}</div>
+      <div class="stat-label">Invalid Category</div>
+    </div>
+  </div>
+</div>
+
+{% if duplicates or invalid %}
+<div class="alert alert-warning">
+  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+  <strong>Note:</strong>
+  {% if duplicates %} {{ duplicates }} row(s) are duplicates (same mobile number already in database) and will be skipped. {% endif %}
+  {% if invalid %} {{ invalid }} row(s) have invalid categories and will be skipped. {% endif %}
+  Only <strong>{{ total - duplicates - invalid }}</strong> new members will be imported.
+</div>
+{% endif %}
+
+<!-- Preview Table -->
+<div class="table-container mb-4">
+  <div style="padding:12px 18px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-2)">
+    Showing all {{ total }} rows — duplicates highlighted in orange, invalid in red
+  </div>
+  <div class="table-responsive">
+    <table class="table" style="font-size:12px">
+      <thead>
+        <tr>
+          <th>#</th><th>Name</th><th>Gender</th><th>Age</th><th>Religion</th>
+          <th>Mobile</th><th>Area</th><th>Join Date</th><th>Status</th>
+          <th>Categories</th><th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in preview %}
+        <tr {% if row.is_duplicate %}style="background:#FFF7ED"
+            {% elif row.invalid_categories %}style="background:#FEF2F2"{% endif %}>
+          <td>{{ loop.index }}</td>
+          <td><strong>{{ row.full_name }}</strong></td>
+          <td>{{ row.gender }}</td>
+          <td>{{ row.age }}</td>
+          <td>{{ row.religion }}</td>
+          <td>{{ row.mobile_number }}</td>
+          <td>{{ row.area }}</td>
+          <td>{{ row.join_date }}</td>
+          <td><span class="badge-{{ row.status }}">{{ row.status.title() }}</span></td>
+          <td>
+            {% if row.category %}
+              <div style="display:flex;gap:4px;flex-wrap:wrap">
+                {% for cat in row.category %}
+                <span style="background:var(--accent-light);color:var(--accent);
+                             padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600">
+                  {{ cat }}
+                </span>
+                {% endfor %}
+              </div>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if row.is_duplicate %}
+              <span class="dup-badge"><i class="bi bi-exclamation-triangle me-1"></i>Duplicate</span>
+            {% elif row.invalid_categories %}
+              <span style="background:#FEE2E2;color:#991B1B;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600">
+                Invalid: {{ row.invalid_categories|join(', ') }}
+              </span>
+            {% else %}
+              <span style="background:#ECFDF5;color:#059669;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600">
+                <i class="bi bi-check me-1"></i>OK
+              </span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Action buttons -->
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+  {% if (total - duplicates - invalid) > 0 %}
+  <form method="POST" action="{{ url_for('csv_import.confirm') }}" style="margin:0">
+    <button type="submit" class="btn-primary-custom"
+            onclick="return confirm('Import {{ total - duplicates - invalid }} members?')">
+      <i class="bi bi-cloud-upload me-1"></i>
+      Confirm Import ({{ total - duplicates - invalid }} members)
+    </button>
+  </form>
+  {% else %}
+  <div class="alert alert-warning mb-0 py-2 px-3">
+    <i class="bi bi-exclamation-circle me-1"></i> No valid rows to import.
+  </div>
+  {% endif %}
+  <a href="{{ url_for('csv_import.cancel') }}" class="btn btn-outline-secondary">Cancel</a>
+</div>
+{% endblock %}

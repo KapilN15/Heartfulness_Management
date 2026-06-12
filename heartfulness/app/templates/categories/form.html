@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Category - Heartfulness NGO{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ action }} Category</div>
+    <div class="page-subtitle">{% if action == 'Add' %}Create a new member category{% else %}Update category details{% endif %}</div>
+  </div>
+  <a href="{{ url_for('categories.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<div class="form-card" style="max-width:600px">
+  <form method="POST">
+    <div class="mb-4">
+      <label class="form-label">Category Name *</label>
+      <input type="text" name="name" class="form-control" required
+             value="{{ category.name if category else '' }}" placeholder="e.g. Meditation, Youth Program">
+    </div>
+    <div class="mb-4">
+      <label class="form-label">Description</label>
+      <textarea name="description" class="form-control" rows="3"
+                 placeholder="Optional description of this category">{{ category.description if category else '' }}</textarea>
+    </div>
+    {% if category %}
+    <div class="mb-4">
+      <label class="form-label">Status</label>
+      <select name="status" class="form-select">
+        <option value="active" {% if category.status=='active' %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if category.status=='inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+    {% endif %}
+    <div class="mt-4 d-flex gap-2">
+      <button type="submit" class="btn-primary-custom">
+        <i class="bi bi-{% if action == 'Add' %}plus{% else %}check{% endif %}-lg me-1"></i>
+        {{ 'Create Category' if action == 'Add' else 'Save Changes' }}
+      </button>
+      <a href="{{ url_for('categories.index') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

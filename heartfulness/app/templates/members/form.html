@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Member - Heartfulness NGO{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ action }} Member</div>
+    <div class="page-subtitle">{% if action == 'Add' %}Register a new member{% else %}Update member information{% endif %}</div>
+  </div>
+  <a href="{{ url_for('members.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<div class="form-card" style="max-width:800px">
+  {% if member %}
+    <div class="mb-3 p-3 rounded" style="background:var(--accent-light)">
+      <strong>Member ID:</strong> <span class="member-id-badge">{{ member.member_id }}</span>
+    </div>
+  {% endif %}
+
+  <form method="POST">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Full Name *</label>
+        <input type="text" name="full_name" class="form-control"
+               value="{{ member.full_name if member else '' }}" required placeholder="Enter full name">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Gender</label>
+        <select name="gender" class="form-select">
+          <option value="">Select gender</option>
+          {% for g in ['Male', 'Female', 'Other'] %}
+          <option value="{{ g }}" {% if member and member.gender == g %}selected{% endif %}>{{ g }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Age</label>
+        <input type="number" name="age" class="form-control" min="1" max="120"
+               value="{{ member.age if member else '' }}" placeholder="Age">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Religion</label>
+        <input type="text" name="religion" class="form-control"
+               value="{{ member.religion if member else '' }}" placeholder="e.g. Hindu, Muslim..." list="religion-list">
+        <datalist id="religion-list">
+          <option value="Hindu"><option value="Muslim"><option value="Christian">
+          <option value="Sikh"><option value="Buddhist"><option value="Jain">
+        </datalist>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Mobile Number</label>
+        <input type="text" name="mobile_number" class="form-control" maxlength="15"
+               value="{{ member.mobile_number if member else '' }}" placeholder="10-digit mobile">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Area / Location</label>
+        <input type="text" name="area" class="form-control"
+               value="{{ member.area if member else '' }}" placeholder="City or area name (will be uppercase)">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Join Date</label>
+        <input type="date" name="join_date" class="form-control"
+               value="{{ member.join_date.strftime('%Y-%m-%d') if member and member.join_date else '' }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select">
+          <option value="active" {% if not member or member.status == 'active' %}selected{% endif %}>Active</option>
+          <option value="inactive" {% if member and member.status == 'inactive' %}selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+      
+      <!-- Categories Selection -->
+      <div class="col-md-12">
+        <label class="form-label">Categories</label>
+        <div style="background:var(--bg-primary);padding:12px;border-radius:8px;border:1px solid var(--border-color)">
+          {% if categories %}
+            {% for cat in categories %}
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="categories" value="{{ cat.id }}" 
+                     id="cat_{{ cat.id }}"
+                     {% if member and cat in member.categories %}checked{% endif %}>
+              <label class="form-check-label" for="cat_{{ cat.id }}">
+                {{ cat.name }}
+                <span style="color:var(--text-muted);font-size:12px">({{ cat.total_member_count }} members)</span>
+              </label>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p style="color:var(--text-muted);font-size:13px;margin:0">No categories available. <a href="{{ url_for('categories.add') }}">Create one</a></p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-4 d-flex gap-2">
+      <button type="submit" class="btn-primary-custom">
+        <i class="bi bi-{% if action == 'Add' %}plus{% else %}check{% endif %}-lg me-1"></i>
+        {{ 'Add Member' if action == 'Add' else 'Save Changes' }}
+      </button>
+      <a href="{{ url_for('members.index') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

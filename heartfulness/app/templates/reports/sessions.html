@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Session Report - Heartfulness NGO{% endblock %}
+{% block page_title %}Session Report{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Session Report</div>
+    <div class="page-subtitle">Category-wise session statistics</div>
+  </div>
+  <a href="{{ url_for('reports.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <form method="get" class="d-flex gap-2 flex-wrap w-100 align-items-end">
+    <div class="filter-group">
+      <label>Category</label>
+      <select name="category" class="form-select">
+        <option value="">All Categories</option>
+        {% for c in session_cats %}
+        <option value="{{ c.id }}" {% if cat_f==c.id|string %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <button type="submit" class="btn-primary-custom"><i class="bi bi-search"></i> Filter</button>
+      <a href="{{ url_for('reports.sessions_report') }}" class="btn btn-outline-secondary btn-sm"
+         style="height:36px;display:flex;align-items:center;padding:0 10px"><i class="bi bi-x-lg"></i></a>
+    </div>
+  </form>
+</div>
+
+<!-- Summary cards -->
+{% set grand_total     = stats|sum(attribute='total') %}
+{% set grand_completed = stats|sum(attribute='completed') %}
+{% set grand_scheduled = stats|sum(attribute='scheduled') %}
+{% set grand_cancelled = stats|sum(attribute='cancelled') %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card si-blue">
+      <div class="stat-icon"><i class="bi bi-calendar3"></i></div>
+      <div class="stat-value">{{ grand_total }}</div>
+      <div class="stat-label">Total Sessions</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card si-green">
+      <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="stat-value">{{ grand_completed }}</div>
+      <div class="stat-label">Completed</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card si-orange">
+      <div class="stat-icon"><i class="bi bi-clock-fill"></i></div>
+      <div class="stat-value">{{ grand_scheduled }}</div>
+      <div class="stat-label">Scheduled</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card si-red">
+      <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+      <div class="stat-value">{{ grand_cancelled }}</div>
+      <div class="stat-label">Cancelled</div>
+    </div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="table-container">
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th><th>Category</th><th>Total</th>
+          <th>Completed</th><th>Scheduled</th><th>Cancelled</th><th>Draft</th><th>Completion Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in stats %}
+        {% set pct = (s.completed / s.total * 100)|round(1) if s.total else 0 %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><strong>{{ s.name }}</strong></td>
+          <td><span style="font-weight:700">{{ s.total }}</span></td>
+          <td><span class="badge-completed">{{ s.completed }}</span></td>
+          <td><span class="badge-scheduled">{{ s.scheduled }}</span></td>
+          <td><span class="badge-cancelled">{{ s.cancelled }}</span></td>
+          <td><span class="badge-draft">{{ s.draft }}</span></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:80px;height:6px;background:var(--border);border-radius:3px">
+                <div style="width:{{ pct }}%;height:100%;border-radius:3px;background:#10B981"></div>
+              </div>
+              <span style="font-size:12px;font-weight:600">{{ pct }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center py-4 text-secondary">No data found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

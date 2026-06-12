@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Reports - Heartfulness NGO{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Reports & Analytics</div>
+    <div class="page-subtitle">Generate, filter and export reports</div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-people-fill text-primary me-2"></i>Member Report</div>
+      <div class="card-body d-flex flex-column">
+        <p style="color:var(--text-2);font-size:13px;flex:1">Member demographics — gender, religion, area breakdown with active/inactive counts.</p>
+        <div class="d-flex gap-2 flex-wrap mt-2">
+          <a href="{{ url_for('reports.members_report') }}" class="btn-primary-custom">
+            <i class="bi bi-eye"></i> View Report
+          </a>
+          <a href="{{ url_for('reports.export_members_csv') }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-file-earmark-csv me-1"></i> CSV
+          </a>
+          <a href="{{ url_for('reports.export_members_pdf') }}" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-check2-square text-success me-2"></i>Attendance Report</div>
+      <div class="card-body d-flex flex-column">
+        <p style="color:var(--text-2);font-size:13px;flex:1">Session-wise attendance with present/absent counts and percentage.</p>
+        <div class="d-flex gap-2 flex-wrap mt-2">
+          <a href="{{ url_for('reports.attendance_report') }}" class="btn-primary-custom">
+            <i class="bi bi-eye"></i> View Report
+          </a>
+          <a href="{{ url_for('reports.export_attendance_csv') }}" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-file-earmark-csv me-1"></i> CSV
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-calendar3 text-info me-2"></i>Session Report</div>
+      <div class="card-body d-flex flex-column">
+        <p style="color:var(--text-2);font-size:13px;flex:1">Session statistics — completed, scheduled, cancelled breakdown by category.</p>
+        <div class="d-flex gap-2 flex-wrap mt-2">
+          <a href="{{ url_for('reports.sessions_report') }}" class="btn-primary-custom">
+            <i class="bi bi-eye"></i> View Report
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-download text-warning me-2"></i>Export All Data</div>
+      <div class="card-body d-flex flex-column">
+        <p style="color:var(--text-2);font-size:13px;flex:1">Download complete data exports for offline analysis or backup.</p>
+        <div class="d-flex gap-2 flex-wrap mt-2">
+          <a href="{{ url_for('reports.export_members_csv') }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-people me-1"></i> All Members CSV
+          </a>
+          <a href="{{ url_for('reports.export_members_pdf') }}" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-file-pdf me-1"></i> Members PDF
+          </a>
+          <a href="{{ url_for('reports.export_attendance_csv') }}" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-check-square me-1"></i> Attendance CSV
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}{{ category.name }} - Heartfulness NGO{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ category.name }}</div>
+    <div class="page-subtitle">Category Analytics & Member List</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('categories.edit', id=category.id) }}" class="btn-primary-custom">
+      <i class="bi bi-pencil"></i> Edit
+    </a>
+    <a href="{{ url_for('categories.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+  </div>
+</div>
+
+<!-- Analytics Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card si-blue">
+      <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-value">{{ total_members }}</div>
+      <div class="stat-label">Total Members</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card si-green">
+      <div class="stat-icon"><i class="bi bi-person-check-fill"></i></div>
+      <div class="stat-value">{{ active_members }}</div>
+      <div class="stat-label">Active Members</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card si-red">
+      <div class="stat-icon"><i class="bi bi-person-dash-fill"></i></div>
+      <div class="stat-value">{{ inactive_members }}</div>
+      <div class="stat-label">Inactive Members</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card si-purple">
+      <div class="stat-icon"><i class="bi bi-percent"></i></div>
+      <div class="stat-value">{{ attendance_pct }}%</div>
+      <div class="stat-label">Avg Attendance</div>
+    </div>
+  </div>
+</div>
+
+<!-- Sessions & Details -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-calendar-check-fill me-2 text-success"></i>Session Statistics
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div style="padding:16px;background:var(--accent-light);border-radius:10px">
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Total Sessions Conducted</div>
+              <div style="font-size:24px;font-weight:700;color:var(--accent-primary)">{{ total_sessions }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            {% if total_members > 0 %}
+              <div style="padding:16px;background:var(--accent-light);border-radius:10px">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Members per Session</div>
+                <div style="font-size:24px;font-weight:700;color:var(--accent-primary)">
+                  {% if total_sessions > 0 %}
+                    {{ (total_members / total_sessions)|round(1)|int }}
+                  {% else %}
+                    0
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-info-circle me-2"></i>Category Info
+      </div>
+      <div class="card-body" style="font-size:13px">
+        <div style="margin-bottom:12px">
+          <strong style="color:var(--text-secondary)">Status:</strong>
+          <span class="badge-{{ category.status }}">{{ category.status.title() }}</span>
+        </div>
+        <div style="margin-bottom:12px">
+          <strong style="color:var(--text-secondary)">Created:</strong><br>
+          {{ category.created_at.strftime('%d %b %Y') }}
+        </div>
+        {% if category.description %}
+        <div>
+          <strong style="color:var(--text-secondary)">Description:</strong><br>
+          {{ category.description }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Member List -->
+<div class="table-container">
+  <div class="card-header">
+    <i class="bi bi-list-check me-2"></i>Active Members ({{ members|length }})
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead><tr><th>Member ID</th><th>Name</th><th>Gender</th><th>Age</th><th>Area</th><th>Join Date</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for m in members %}
+        <tr>
+          <td><span class="member-id-badge">{{ m.member_id }}</span></td>
+          <td><strong>{{ m.full_name }}</strong></td>
+          <td>{{ m.gender or '-' }}</td>
+          <td>{{ m.age or '-' }}</td>
+          <td>{{ m.area or '-' }}</td>
+          <td>{{ m.join_date.strftime('%d %b %Y') if m.join_date else '-' }}</td>
+          <td>
+            <a href="{{ url_for('members.view', id=m.id) }}" class="btn-sm-action btn-view">
+              <i class="bi bi-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center py-4 text-secondary">No active members in this category.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% block title %}Members - Heartfulness NGO{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Members</div>
+    <div class="page-subtitle">Manage NGO members</div>
+  </div>
+  {% if current_user.can('manage_members') %}
+  <a href="{{ url_for('members.add') }}" class="btn-primary-custom">
+    <i class="bi bi-plus-lg"></i> Add Member
+  </a>
+  {% endif %}
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <form method="get" action="{{ url_for('members.index') }}" class="d-flex gap-2 flex-wrap w-100 align-items-end">
+    <div class="filter-group flex-grow-1">
+      <label>Search</label>
+      <div class="search-wrapper">
+        <i class="bi bi-search"></i>
+        <input type="text" name="search" class="form-control" placeholder="Name, ID, Mobile, Area..."
+               value="{{ search }}" style="padding-left:32px">
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Gender</label>
+      <select name="gender" class="form-select">
+        <option value="">All</option>
+        <option value="Male" {% if gender_f=='Male' %}selected{% endif %}>Male</option>
+        <option value="Female" {% if gender_f=='Female' %}selected{% endif %}>Female</option>
+        <option value="Other" {% if gender_f=='Other' %}selected{% endif %}>Other</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Status</label>
+      <select name="status" class="form-select">
+        <option value="">All</option>
+        <option value="active" {% if status_f=='active' %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if status_f=='inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Category</label>
+      <select name="category" class="form-select">
+        <option value="">All Categories</option>
+        {% for c in categories %}
+        <option value="{{ c.id }}" {% if category_f == c.id|string %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Religion</label>
+      <select name="religion" class="form-select">
+        <option value="">All</option>
+        {% for r in religions %}
+        <option value="{{ r }}" {% if religion_f==r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <button type="submit" class="btn-primary-custom"><i class="bi bi-search"></i> Filter</button>
+      <a href="{{ url_for('members.index') }}" class="btn btn-outline-secondary btn-sm" style="height:38px;display:flex;align-items:center">
+        <i class="bi bi-x-lg"></i>
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Table -->
+<div class="table-container">
+  <div style="padding:16px 20px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:14px;color:var(--text-secondary)">
+      Showing {{ members.items|length }} of {{ members.total }} members
+    </span>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Member ID</th><th>Full Name</th><th>Gender</th><th>Age</th>
+          <th>Categories</th><th>Area</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in members.items %}
+        <tr>
+          <td><span class="member-id-badge">{{ m.member_id }}</span></td>
+          <td><strong>{{ m.full_name }}</strong></td>
+          <td>{{ m.gender or '-' }}</td>
+          <td>{{ m.age or '-' }}</td>
+          <td>
+            {% if m.categories %}
+              <div style="display:flex;gap:4px;flex-wrap:wrap">
+                {% for cat in m.categories %}
+                <span style="background:var(--accent-light);color:var(--accent-primary);padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">{{ cat.name }}</span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <span style="color:var(--text-muted);font-size:12px">-</span>
+            {% endif %}
+          </td>
+          <td>{{ m.area or '-' }}</td>
+          <td><span class="badge-{{ m.status }}">{{ m.status.title() }}</span></td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <a href="{{ url_for('members.view', id=m.id) }}" class="btn-sm-action btn-view">
+                <i class="bi bi-eye"></i>
+              </a>
+              {% if current_user.can('manage_members') %}
+              <a href="{{ url_for('members.edit', id=m.id) }}" class="btn-sm-action btn-edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% if m.status == 'active' %}
+              <form method="POST" action="{{ url_for('members.delete', id=m.id) }}" style="margin:0">
+                <button type="submit" class="btn-sm-action btn-delete"
+                        data-confirm="Deactivate this member?">
+                  <i class="bi bi-person-dash"></i>
+                </button>
+              </form>
+              {% endif %}
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center py-4 text-secondary">No members found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <!-- Pagination -->
+  {% if members.pages > 1 %}
+  <div style="padding:16px 20px;border-top:1px solid var(--border-color)">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {% if not members.has_prev %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('members.index', page=members.prev_num, search=search, gender=gender_f, status=status_f, category=category_f, religion=religion_f) }}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% for p in members.iter_pages() %}
+          {% if p %}
+          <li class="page-item {% if p == members.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('members.index', page=p, search=search, gender=gender_f, status=status_f, category=category_f, religion=religion_f) }}">{{ p }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not members.has_next %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('members.index', page=members.next_num, search=search, gender=gender_f, status=status_f, category=category_f, religion=religion_f) }}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
